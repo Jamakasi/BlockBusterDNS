@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Block Buster DNS Records Management</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- Подключаем HTMX -->
+    <script src="/static/htmx.min.js"></script>
+    <script src="/static/path-params.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>DNS Records Management</h1>
+        
+        <!-- Форма для добавления новой DNS-записи с использованием input-group -->
+        <form id="addRecordForm" class="mb-4">
+            <div class="input-group mb-3">
+                <input type="text" class="form-control" name="field-to-add" placeholder="Добавить новую DNS-запись. *.example.com">
+                <div class="input-group-append">
+                    <button class="btn btn-primary" type="submit" hx-get="/api/add/{field-to-add}" hx-include="[name='field-to-add']" hx-ext="path-params" hx-swap="none">Добавить</button>
+                </div>
+            </div>
+        </form>
+        
+        <!-- Форма для поиска DNS-записей -->
+        <form id="searchForm" class="mb-4">
+            <div class="input-group mb-3">
+                <input type="text" class="form-control" id="field-to-search" name="field-to-search" placeholder="Найти DNS-запись. .com или ."
+                hx-trigger="input changed delay:500ms, field-to-search" 
+                hx-indicator=".htmx-indicator"
+                hx-get="/query/{field-to-search}" hx-include="[name='field-to-search']" hx-ext="path-params" hx-target="#recordsTableBody">
+                <div class="input-group-append">
+                    <button class="btn btn-secondary" type="submit" hx-get="/query/{field-to-search}" hx-include="[name='field-to-search']" hx-ext="path-params" hx-target="#recordsTableBody" hx-indicator=".htmx-indicator">Поиск</button>
+                </div>
+            </div>
+        </form>
+        
+        <span class="htmx-indicator"> 
+            <img src="/static/bars.svg"/> Searching... 
+           </span> 
+        <!-- Таблица с DNS-записями -->
+        <table class="table table-bordered" >
+            <thead>
+                <tr>
+                    <th scope="col">Имя записи</th>
+                    <th scope="col">Действия</th>
+                </tr>
+            </thead>
+            <tbody id="recordsTableBody" hx-confirm="Точно удалить?" hx-target="closest tr" hx-swap="outerHTML swap:1s">
+                <!-- Здесь будут отображаться DNS-записи -->
+            </tbody>
+        </table>
+        <script>
+        </script>
+    </div>
+</body>
+</html>

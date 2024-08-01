@@ -1,0 +1,8 @@
+{{range .Domains}}
+   <tr>
+      <td>{{ . }}</td>
+      <td>
+         <button class="btn btn-danger" hx-delete="/api/del/{{ . }}" >Delete</button></a>
+      </td>
+   </tr>
+{{end}}

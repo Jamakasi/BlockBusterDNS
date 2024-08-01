@@ -1,0 +1,39 @@
+dns.local {
+    hosts {
+        bad::1 dns.local
+        fallthrough
+    }
+}
+
+.:53 {
+    cache
+    loop
+    dmatcher {
+	port 80
+        storage-type memdb
+        storage-to /dns/domain-list.txt
+	jump-to-dns 127.0.0.1:5300
+    }
+    forward . 94.140.14.14:53 94.140.15.15:53
+}
+.:5300 {
+    cut_cname
+    forward . 127.0.0.1:5301
+}
+.:5301 {
+    loop
+    dns64_hack {
+        v4_delete
+        v6_delete
+        dnssec_delete
+        prefix bad:64::/96
+        jump-to-dns 127.0.0.1:5302
+    }
+}
+.:5302 {
+    rewrite stop {
+      ttl regex .* 604800
+    }
+    forward . 8.8.8.8 8.8.4.4 
+    finalize
+}
