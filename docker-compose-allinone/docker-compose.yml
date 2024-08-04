@@ -1,0 +1,99 @@
+version: '2.1'
+
+networks:
+  net-gateway-nat64:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.64.0.0/16
+          ip_range: 172.64.0.0/24
+
+  net-clients:
+    enable_ipv6: true
+    ipam:
+      driver: default
+      config:
+        - subnet: fc00:1:2::/64
+          gateway: fc00:1:2::1
+        - subnet: 10.64.0.0/24
+          ip_range: 10.64.0.0/24
+          gateway: 10.64.0.1
+
+services:
+  nat64:
+    build: ./tayga/
+    privileged: true
+    stdin_open: true
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+      - net.ipv4.conf.all.src_valid_mark=1
+      - net.ipv4.conf.all.forwarding=1
+      - net.ipv6.conf.all.forwarding=1
+    environment:
+        TAYGA_CONF_IPV4_ADDR: 172.64.0.2
+        TAYGA_IPV6_ADDR: fc00:1:2::2
+        TAYGA_CONF_PREFIX: 64:ff9b::/96
+    networks:
+      net-gateway-nat64:
+        ipv4_address: 172.64.0.2
+      net-clients:
+        ipv4_address: 10.64.0.2
+        ipv6_address: fc00:1:2::2
+  coredns:
+    build: ../docker/
+    privileged: true
+    stdin_open: true
+    ports:
+      - 80:80
+      - 53:53
+      - 53:53/udp
+    volumes:
+      - ./coredns/Corefile:/dns/Corefile
+      - ./coredns/domain-list.txt:/dns/domain-list.txt
+    networks:
+      net-clients:
+        ipv4_address: 10.64.0.3
+        ipv6_address: fc00:1:2::3
+
+  wireguard-ui:
+    image: ngoduykhanh/wireguard-ui:latest
+    container_name: wireguard-ui
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+      - net.ipv4.conf.all.src_valid_mark=1
+      - net.ipv4.conf.all.forwarding=1
+      - net.ipv6.conf.all.forwarding=1
+    environment:
+      - BIND_ADDRESS=[::]:80
+      - WGUI_USERNAME=admin
+      - WGUI_PASSWORD=admin
+      - WGUI_DNS=fc00:1:2::3
+      - WGUI_MTU=1450
+      - WGUI_SERVER_LISTEN_PORT=51666
+      - WGUI_SERVER_INTERFACE_ADDRESSES=fc00:1:2:4::1/64
+      - WGUI_DEFAULT_CLIENT_ALLOWED_IPS=fc00:1:2::/64,fc00:1:2:4::/64,64:ff9b::/96
+      - WGUI_ENDPOINT_ADDRESS=10.22.1.101:51666
+      - WGUI_MANAGE_START=true
+      - WGUI_MANAGE_RESTART=true
+      - WGUI_SERVER_POST_UP_SCRIPT=ip6tables -A FORWARD -i wg0 -j ACCEPT; ip6tables -t nat -A POSTROUTING -o eth0 -j MASQUERADE; ip r a 64:ff9b::/96 via fc00:1:2::2
+      - WGUI_SERVER_POST_DOWN_SCRIPT=ip6tables -D FORWARD -i wg0 -j ACCEPT; ip6tables -t nat -D POSTROUTING -o eth0 -j MASQUERADE; ; ip r d 64:ff9b::/96
+    ports:
+      - "5000:80"
+      - "51666:51666/udp"
+    networks:
+      net-clients:
+        ipv4_address: 10.64.0.4
+        ipv6_address: fc00:1:2::4
+    logging:
+      driver: json-file
+      options:
+        max-size: 50m
+    volumes:
+      - ./wireguard/db:/app/db
+      - ./wireguard/config:/etc/wireguard

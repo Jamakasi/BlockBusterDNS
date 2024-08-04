@@ -1,10 +1,9 @@
-dns.local {
+local {
     hosts {
-        bad:0000:0000:d::2 dns.local
-        fallthrough
+        fc00:1:2::3 dns.local
+	fc00:1:2::4 wg.local
     }
 }
-
 .:53 {
     cache
     loop
@@ -26,7 +25,7 @@ dns.local {
         v4_delete
         v6_delete
         dnssec_delete
-        prefix bad:0000:0000:64::/96
+        prefix 64:ff9b::/96
         jump-to-dns 127.0.0.1:5302
     }
 }

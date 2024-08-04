@@ -1,0 +1,16 @@
+[Unit]
+Description=CoreDNS DNS server
+Documentation=https://coredns.io
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/coredns
+ExecStart=/opt/coredns/coredns -conf=/opt/coredns/Corefile
+ExecReload=/bin/kill -SIGUSR1 $MAINPID
+Restart=on-failure
+StandardOutput=append:/opt/coredns/coredns.log
+StandardError=append:/opt/coredns/coredns.err.log
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=multi-user.target
