@@ -1,0 +1,56 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: Go
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.20'
+    - name: Clone repo
+      uses: actions/checkout@v4
+      
+    - name: Clone coredns
+      run: |
+          git config --global url.https://github.com/.insteadOf git://github.com/
+          git clone https://github.com/coredns/coredns.git
+          
+    - name: Merge this repo and coredns
+      run: cp -R BlockBusterDNS/coredns/plugin/* coredns/plugin/
+    
+    - name: Enable plugin dns64_hack
+      run: sed '/dns64:dns64/a dns64_hack:dns64_hack' coredns/plugin.cfg >> coredns/plugin.cfg1 && mv coredns/plugin.cfg1 coredns/plugin.cfg
+      
+    - name: Enable plugin cut_cname
+      run: sed '/dns64_hack:dns64_hack/a cut_cname:cut_cname' coredns/plugin.cfg >> coredns/plugin.cfg1 && mv coredns/plugin.cfg1 coredns/plugin.cfg
+      
+    - name: Enable plugin dmatcher
+      run: sed '/local:local/a dmatcher:dmatcher' coredns/plugin.cfg >> coredns/plugin.cfg1 && mv coredns/plugin.cfg1 coredns/plugin.cfg
+      
+    - name: Enable plugin finalize
+      run: sed '/view:view/a finalize:github.com/tmeckel/coredns-finalizer' coredns/plugin.cfg >> coredns/plugin.cfg1 && mv coredns/plugin.cfg1 coredns/plugin.cfg
+      
+    - name: Build
+      run: make -C coredns/
+      
+    - name: Copy bin to release
+      run: mkdir ../release && cp coredns/coredns ../release && chmod +x ../release/coredns
+
+    - name: Copy templates to release
+      run: cp -r BlockBusterDNS/coredns/templates ../release
+
+    - name: Copy www_static to release
+      run: cp -r BlockBusterDNS/coredns/www_static ../release
+
