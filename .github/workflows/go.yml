@@ -25,32 +25,32 @@ jobs:
     - name: Clone coredns
       run: |
           git config --global url.https://github.com/.insteadOf git://github.com/
-          git clone https://github.com/coredns/coredns.git
+          git clone https://github.com/coredns/coredns.git coredns_main
           
     - name: Merge this repo and coredns
-      run: cp -R BlockBusterDNS/coredns/plugin/* coredns/plugin/
+      run: cp -R coredns/plugin/* coredns_main/plugin/
     
     - name: Enable plugin dns64_hack
-      run: sed '/dns64:dns64/a dns64_hack:dns64_hack' coredns/plugin.cfg >> coredns/plugin.cfg1 && mv coredns/plugin.cfg1 coredns/plugin.cfg
+      run: sed '/dns64:dns64/a dns64_hack:dns64_hack' coredns_main/plugin.cfg >> coredns_main/plugin.cfg1 && mv coredns_main/plugin.cfg1 coredns_main/plugin.cfg
       
     - name: Enable plugin cut_cname
-      run: sed '/dns64_hack:dns64_hack/a cut_cname:cut_cname' coredns/plugin.cfg >> coredns/plugin.cfg1 && mv coredns/plugin.cfg1 coredns/plugin.cfg
+      run: sed '/dns64_hack:dns64_hack/a cut_cname:cut_cname' coredns_main/plugin.cfg >> coredns_main/plugin.cfg1 && mv coredns_main/plugin.cfg1 coredns_main/plugin.cfg
       
     - name: Enable plugin dmatcher
-      run: sed '/local:local/a dmatcher:dmatcher' coredns/plugin.cfg >> coredns/plugin.cfg1 && mv coredns/plugin.cfg1 coredns/plugin.cfg
+      run: sed '/local:local/a dmatcher:dmatcher' coredns_main/plugin.cfg >> coredns_main/plugin.cfg1 && mv coredns_main/plugin.cfg1 coredns_main/plugin.cfg
       
     - name: Enable plugin finalize
-      run: sed '/view:view/a finalize:github.com/tmeckel/coredns-finalizer' coredns/plugin.cfg >> coredns/plugin.cfg1 && mv coredns/plugin.cfg1 coredns/plugin.cfg
+      run: sed '/view:view/a finalize:github.com/tmeckel/coredns-finalizer' coredns_main/plugin.cfg >> coredns_main/plugin.cfg1 && mv coredns_main/plugin.cfg1 coredns_main/plugin.cfg
       
     - name: Build
-      run: make -C coredns/
+      run: make -C coredns_main/
       
     - name: Copy bin to release
-      run: mkdir ../release && cp coredns/coredns ../release && chmod +x ../release/coredns
+      run: mkdir ../release && cp coredns_main/coredns ../release && chmod +x ../release/coredns
 
     - name: Copy templates to release
-      run: cp -r BlockBusterDNS/coredns/templates ../release
+      run: cp -r coredns/templates ../release
 
     - name: Copy www_static to release
-      run: cp -r BlockBusterDNS/coredns/www_static ../release
+      run: cp -r coredns/www_static ../release
 
