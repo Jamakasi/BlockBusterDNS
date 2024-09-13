@@ -53,4 +53,20 @@ jobs:
 
     - name: Copy www_static to release
       run: cp -r coredns/www_static ../release
+    
+    - name: Copy systemd unit to release
+      run: cp -r systemd/coredns.service ../release
+
+    - name: Create archive
+      run: tar czf release.tar.gz ../release/
+
+    - name: Upload binaries to release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: release.tar.gz
+        asset_name: linux-x64-systemd.tar.gz
+        tag: ${{ github.ref }}
+        overwrite: true
+        body: "auto build"
 
